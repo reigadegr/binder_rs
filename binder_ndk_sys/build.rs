@@ -13,7 +13,7 @@ name = "binder_ndk"
 authors = ["Android"]
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.81"
 
 [lib]
 crate-type = ["cdylib"]
