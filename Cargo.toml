@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "binder",
+    "binder_ndk",
     "binder_tokio",
     "binder_ndk_sys",
     "example",
