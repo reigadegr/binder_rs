@@ -10,7 +10,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [build-dependencies]
-bindgen = "0.69.4"
+bindgen = "0.70.1"
 anyhow = "1"
 
 [profile.release]
