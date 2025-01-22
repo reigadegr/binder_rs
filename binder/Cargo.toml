@@ -10,7 +10,6 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-downcast-rs = "1.2.0"
-libc = "0.2.139"
-
+libc = "0.2.169"
 binder_ndk_sys = { path = "../binder_ndk_sys", version = "0" }
+downcast-rs = "2.0.1"
