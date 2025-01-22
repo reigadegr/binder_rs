@@ -27,7 +27,7 @@ pub trait IRemoteService: binder::Interface + Send {
 }
 pub trait IRemoteServiceAsync<P>: binder::Interface + Send {
   fn get_descriptor() -> &'static str where Self: Sized { "IRemoteService" }
-  fn getPid<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>>;
+  fn getPid(&self) -> binder::BoxFuture<'_, binder::Result<i32>>;
   fn basicTypes<'a>(&'a self, _arg_anInt: i32, _arg_aLong: i64, _arg_aBoolean: bool, _arg_aFloat: f32, _arg_aDouble: f64, _arg_aString: &'a str) -> binder::BoxFuture<'a, binder::Result<()>>;
 }
 #[::async_trait::async_trait]
@@ -76,7 +76,7 @@ pub trait IRemoteServiceDefault: Send + Sync {
   }
 }
 pub mod transactions {
-  pub const getPid: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 0;
+  pub const getPid: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION;
   pub const basicTypes: binder::binder_impl::TransactionCode = binder::binder_impl::FIRST_CALL_TRANSACTION + 1;
 }
 pub type IRemoteServiceDefaultRef = Option<std::sync::Arc<dyn IRemoteServiceDefault>>;
@@ -86,7 +86,7 @@ lazy_static! {
 }
 impl BpRemoteService {
   fn build_parcel_getPid(&self) -> binder::Result<binder::binder_impl::Parcel> {
-    let mut aidl_data = self.binder.prepare_transact()?;
+    let aidl_data = self.binder.prepare_transact()?;
     Ok(aidl_data)
   }
   fn read_response_getPid(&self, _aidl_reply: std::result::Result<binder::binder_impl::Parcel, binder::StatusCode>) -> binder::Result<i32> {
@@ -136,7 +136,7 @@ impl IRemoteService for BpRemoteService {
   }
 }
 impl<P: binder::BinderAsyncPool> IRemoteServiceAsync<P> for BpRemoteService {
-  fn getPid<'a>(&'a self) -> binder::BoxFuture<'a, binder::Result<i32>> {
+  fn getPid(&self) -> binder::BoxFuture<'_, binder::Result<i32>> {
     let _aidl_data = match self.build_parcel_getPid() {
       Ok(_aidl_data) => _aidl_data,
       Err(err) => return Box::pin(std::future::ready(Err(err))),
@@ -200,5 +200,5 @@ fn on_transact(_aidl_service: &dyn IRemoteService, _aidl_code: binder::binder_im
   }
 }
 pub(crate) mod mangled {
- pub use super::IRemoteService as _14_IRemoteService;
+ 
 }

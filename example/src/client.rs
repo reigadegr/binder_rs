@@ -9,7 +9,7 @@ pub fn run() -> anyhow::Result<()> {
     println!("Do basicTypes()");
     my_service
         .basicTypes(
-            1 as i32, 2 as i64, false, 1.1 as f32, 2.2 as f64, "fuckyou!",
+            1_i32, 2_i64, false, 1.1_f32, 2.2_f64, "fuckyou!",
         )
         .expect("Failed to call basicTypes");
     println!("Done!");
