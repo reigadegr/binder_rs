@@ -101,20 +101,17 @@ where
 /// makes no stability guarantees ([`Local`]). [`Local`] is
 /// currently the default stability.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default)]
 pub enum Stability {
     /// Default stability, visible to other modules in the same compilation
     /// context (e.g. modules on system.img)
+    #[default]
     Local,
 
     /// A Vendor Interface Object, which promises to be stable
     Vintf,
 }
 
-impl Default for Stability {
-    fn default() -> Self {
-        Stability::Local
-    }
-}
 
 impl From<Stability> for i32 {
     fn from(stability: Stability) -> i32 {
