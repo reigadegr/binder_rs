@@ -74,10 +74,13 @@ fn main() {
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
+    let headers_path = "/usr/include";
+   
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("src/BinderBindings.hpp")
+        .clang_arg(format!("-I{}", headers_path))
         .clang_arg("-Isrc/include_cpp")
         .clang_arg("-Isrc/include_ndk")
         .clang_arg("-Isrc/include_platform")
