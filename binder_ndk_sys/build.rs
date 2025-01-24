@@ -17,6 +17,8 @@ rust-version = "1.67"
 
 [lib]
 crate-type = ["cdylib"]
+
+[workspace]
 "#;
 
 fn build_stub() -> Result<()> {
