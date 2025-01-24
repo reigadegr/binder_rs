@@ -16,7 +16,7 @@ edition = "2021"
 rust-version = "1.67"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["cdylib"]
 
 [workspace]
 "#;
