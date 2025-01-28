@@ -60,7 +60,9 @@ pub fn main() -> Result<(), &'static str> {
         if let Some(extension_name) = extension_name {
             let extension =
                 BnTest::new_binder(TestService::new(&extension_name), BinderFeatures::default());
-            service.set_extension(&mut extension.as_binder()).expect("Could not add extension");
+            service
+                .set_extension(&mut extension.as_binder())
+                .expect("Could not add extension");
         }
         binder::add_service(&service_name, service.as_binder())
             .expect("Could not register service");
@@ -71,7 +73,10 @@ pub fn main() -> Result<(), &'static str> {
 }
 
 fn print_usage() {
-    eprintln!("Usage: {} SERVICE_NAME [EXTENSION_NAME]", RUST_SERVICE_BINARY);
+    eprintln!(
+        "Usage: {} SERVICE_NAME [EXTENSION_NAME]",
+        RUST_SERVICE_BINARY
+    );
     eprintln!(concat!(
         "Spawn a Binder test service identified by SERVICE_NAME,",
         " optionally with an extesion named EXTENSION_NAME",
@@ -85,7 +90,10 @@ struct TestService {
 
 impl TestService {
     fn new(s: &str) -> Self {
-        Self { s: s.to_string(), dump_args: Mutex::new(Vec::new()) }
+        Self {
+            s: s.to_string(),
+            dump_args: Mutex::new(Vec::new()),
+        }
     }
 }
 
@@ -205,14 +213,17 @@ fn on_transact(
 impl ITest for BpTest {
     fn test(&self) -> Result<String, StatusCode> {
         let reply =
-            self.binder.transact(TestTransactionCode::Test as TransactionCode, 0, |_| Ok(()))?;
+            self.binder
+                .transact(TestTransactionCode::Test as TransactionCode, 0, |_| Ok(()))?;
         reply.read()
     }
 
     fn get_dump_args(&self) -> Result<Vec<String>, StatusCode> {
-        let reply =
-            self.binder
-                .transact(TestTransactionCode::GetDumpArgs as TransactionCode, 0, |_| Ok(()))?;
+        let reply = self.binder.transact(
+            TestTransactionCode::GetDumpArgs as TransactionCode,
+            0,
+            |_| Ok(()),
+        )?;
         reply.read()
     }
 
@@ -248,7 +259,11 @@ impl<P: binder::BinderAsyncPool> IATest<P> for BpTest {
         let binder = self.binder.clone();
         P::spawn(
             move || {
-                binder.transact(TestTransactionCode::GetDumpArgs as TransactionCode, 0, |_| Ok(()))
+                binder.transact(
+                    TestTransactionCode::GetDumpArgs as TransactionCode,
+                    0,
+                    |_| Ok(()),
+                )
             },
             |reply| async move { reply?.read() },
         )
@@ -407,7 +422,9 @@ mod tests {
     impl Drop for ScopedServiceProcess {
         fn drop(&mut self) {
             self.0.kill().expect("Could not kill child process");
-            self.0.wait().expect("Could not wait for child process to die");
+            self.0
+                .wait()
+                .expect("Could not wait for child process to die");
         }
     }
 
@@ -428,7 +445,10 @@ mod tests {
         );
 
         // The service manager service isn't an ITest, so this must fail.
-        assert_eq!(binder::get_interface::<dyn ITest>("manager").err(), Some(StatusCode::BAD_TYPE));
+        assert_eq!(
+            binder::get_interface::<dyn ITest>("manager").err(),
+            Some(StatusCode::BAD_TYPE)
+        );
         assert_eq!(
             binder::get_interface::<dyn IATest<Tokio>>("manager").err(),
             Some(StatusCode::BAD_TYPE)
@@ -443,7 +463,9 @@ mod tests {
 
         assert!(binder::get_service("this_service_does_not_exist").is_none());
         assert_eq!(
-            binder_tokio::get_interface::<dyn ITest>("this_service_does_not_exist").await.err(),
+            binder_tokio::get_interface::<dyn ITest>("this_service_does_not_exist")
+                .await
+                .err(),
             Some(StatusCode::NAME_NOT_FOUND)
         );
         assert_eq!(
@@ -455,11 +477,15 @@ mod tests {
 
         // The service manager service isn't an ITest, so this must fail.
         assert_eq!(
-            binder_tokio::get_interface::<dyn ITest>("manager").await.err(),
+            binder_tokio::get_interface::<dyn ITest>("manager")
+                .await
+                .err(),
             Some(StatusCode::BAD_TYPE)
         );
         assert_eq!(
-            binder_tokio::get_interface::<dyn IATest<Tokio>>("manager").await.err(),
+            binder_tokio::get_interface::<dyn IATest<Tokio>>("manager")
+                .await
+                .err(),
             Some(StatusCode::BAD_TYPE)
         );
     }
@@ -494,7 +520,10 @@ mod tests {
             .expect("Could not get declared instances");
 
         let expected_defaults = usize::from(has_lights);
-        assert_eq!(expected_defaults, instances.iter().filter(|i| i.as_str() == "default").count());
+        assert_eq!(
+            expected_defaults,
+            instances.iter().filter(|i| i.as_str() == "default").count()
+        );
     }
 
     #[test]
@@ -532,7 +561,10 @@ mod tests {
         let test_client: Strong<dyn IATest<Tokio>> = binder_tokio::wait_for_interface(service_name)
             .await
             .expect("Did not get manager binder service");
-        assert_eq!(test_client.test().await.unwrap(), "wait_for_trivial_client_test");
+        assert_eq!(
+            test_client.test().await.unwrap(),
+            "wait_for_trivial_client_test"
+        );
     }
 
     fn get_expected_selinux_context() -> &'static str {
@@ -551,7 +583,10 @@ mod tests {
         let _process = ScopedServiceProcess::new(service_name);
         let test_client: Strong<dyn ITest> =
             binder::get_interface(service_name).expect("Did not get manager binder service");
-        assert_eq!(test_client.get_selinux_context().unwrap(), get_expected_selinux_context());
+        assert_eq!(
+            test_client.get_selinux_context().unwrap(),
+            get_expected_selinux_context()
+        );
     }
 
     #[tokio::test]
@@ -588,7 +623,10 @@ mod tests {
             .await
             .expect("Did not get manager binder service");
         let test_client = test_client.into_sync();
-        assert_eq!(test_client.get_selinux_context().unwrap(), get_expected_selinux_context());
+        assert_eq!(
+            test_client.get_selinux_context().unwrap(),
+            get_expected_selinux_context()
+        );
     }
 
     struct Bools {
@@ -632,7 +670,9 @@ mod tests {
 
         let mut death_recipient = {
             let flag = binder_died.clone();
-            let set_on_drop = SetOnDrop { binder_dealloc: binder_dealloc.clone() };
+            let set_on_drop = SetOnDrop {
+                binder_dealloc: binder_dealloc.clone(),
+            };
             DeathRecipient::new(move || {
                 flag.store(true, Ordering::Relaxed);
                 // Force the closure to take ownership of set_on_drop. When the closure is
@@ -641,9 +681,14 @@ mod tests {
             })
         };
 
-        binder.link_to_death(&mut death_recipient).expect("link_to_death failed");
+        binder
+            .link_to_death(&mut death_recipient)
+            .expect("link_to_death failed");
 
-        let bools = Bools { binder_died, binder_dealloc };
+        let bools = Bools {
+            binder_died,
+            binder_dealloc,
+        };
 
         (bools, death_recipient)
     }
@@ -661,7 +706,9 @@ mod tests {
         let (bools, recipient) = register_death_notification(&mut remote);
 
         drop(service_process);
-        remote.ping_binder().expect_err("Service should have died already");
+        remote
+            .ping_binder()
+            .expect_err("Service should have died already");
 
         // Pause to ensure any death notifications get delivered
         thread::sleep(Duration::from_secs(1));
@@ -685,15 +732,22 @@ mod tests {
 
         let (bools, mut recipient) = register_death_notification(&mut remote);
 
-        remote.unlink_to_death(&mut recipient).expect("Could not unlink death notifications");
+        remote
+            .unlink_to_death(&mut recipient)
+            .expect("Could not unlink death notifications");
 
         drop(service_process);
-        remote.ping_binder().expect_err("Service should have died already");
+        remote
+            .ping_binder()
+            .expect_err("Service should have died already");
 
         // Pause to ensure any death notifications get delivered
         thread::sleep(Duration::from_secs(1));
 
-        assert!(!bools.is_dead(), "Received unexpected death notification after unlinking",);
+        assert!(
+            !bools.is_dead(),
+            "Received unexpected death notification after unlinking",
+        );
 
         bools.assert_not_dropped();
         drop(recipient);
@@ -748,10 +802,18 @@ mod tests {
             let dump_args = ["dump", "args", "for", "testing"];
 
             let null_out = File::open("/dev/null").expect("Could not open /dev/null");
-            remote.dump(&null_out, &dump_args).expect("Could not dump remote service");
+            remote
+                .dump(&null_out, &dump_args)
+                .expect("Could not dump remote service");
 
-            let remote_args = test_client.get_dump_args().expect("Could not fetched dumped args");
-            assert_eq!(dump_args, remote_args[..], "Remote args don't match call to dump");
+            let remote_args = test_client
+                .get_dump_args()
+                .expect("Could not fetched dumped args");
+            assert_eq!(
+                dump_args,
+                remote_args[..],
+                "Remote args don't match call to dump"
+            );
         }
 
         // get/set_extensions is tested in test_extensions()
@@ -774,7 +836,9 @@ mod tests {
             let mut remote = binder::get_service(service_name);
             assert!(remote.is_binder_alive());
 
-            let extension = remote.get_extension().expect("Could not check for an extension");
+            let extension = remote
+                .get_extension()
+                .expect("Could not check for an extension");
             assert!(extension.is_none());
         }
 
@@ -784,7 +848,9 @@ mod tests {
             let mut remote = binder::get_service(service_name);
             assert!(remote.is_binder_alive());
 
-            let maybe_extension = remote.get_extension().expect("Could not check for an extension");
+            let maybe_extension = remote
+                .get_extension()
+                .expect("Could not check for an extension");
 
             let extension = maybe_extension.expect("Remote binder did not have an extension");
 
@@ -825,8 +891,9 @@ mod tests {
             BnTest::new_binder(TestService::new(service_name), BinderFeatures::default())
                 .as_binder();
 
-        let service: Strong<dyn ITest> =
-            service_ibinder.into_interface().expect("Could not reassociate the generic ibinder");
+        let service: Strong<dyn ITest> = service_ibinder
+            .into_interface()
+            .expect("Could not reassociate the generic ibinder");
 
         assert_eq!(service.test().unwrap(), service_name);
     }
@@ -875,10 +942,14 @@ mod tests {
     #[test]
     #[allow(clippy::eq_op)]
     fn binder_ord() {
-        let service1 =
-            BnTest::new_binder(TestService::new("testing_service1"), BinderFeatures::default());
-        let service2 =
-            BnTest::new_binder(TestService::new("testing_service2"), BinderFeatures::default());
+        let service1 = BnTest::new_binder(
+            TestService::new("testing_service1"),
+            BinderFeatures::default(),
+        );
+        let service2 = BnTest::new_binder(
+            TestService::new("testing_service2"),
+            BinderFeatures::default(),
+        );
 
         assert!((service1 >= service1));
         assert!((service1 <= service1));
@@ -887,10 +958,14 @@ mod tests {
 
     #[test]
     fn binder_parcel_mixup() {
-        let service1 =
-            BnTest::new_binder(TestService::new("testing_service1"), BinderFeatures::default());
-        let service2 =
-            BnTest::new_binder(TestService::new("testing_service2"), BinderFeatures::default());
+        let service1 = BnTest::new_binder(
+            TestService::new("testing_service1"),
+            BinderFeatures::default(),
+        );
+        let service2 = BnTest::new_binder(
+            TestService::new("testing_service2"),
+            BinderFeatures::default(),
+        );
 
         let service1 = service1.as_binder();
         let service2 = service2.as_binder();

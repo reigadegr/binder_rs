@@ -100,8 +100,7 @@ where
 /// An interface can promise to be a stable vendor interface ([`Vintf`]), or
 /// makes no stability guarantees ([`Local`]). [`Local`] is
 /// currently the default stability.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Stability {
     /// Default stability, visible to other modules in the same compilation
     /// context (e.g. modules on system.img)
@@ -111,7 +110,6 @@ pub enum Stability {
     /// A Vendor Interface Object, which promises to be stable
     Vintf,
 }
-
 
 impl From<Stability> for i32 {
     fn from(stability: Stability) -> i32 {
@@ -433,7 +431,7 @@ impl<I: FromIBinder + ?Sized> Ord for Strong<I> {
 
 impl<I: FromIBinder + ?Sized> PartialOrd for Strong<I> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.0.as_binder().partial_cmp(&other.0.as_binder())
+        Some(self.cmp(other))
     }
 }
 
@@ -456,19 +454,28 @@ impl<I: FromIBinder + ?Sized> Weak<I> {
     /// Construct a new weak reference from a strong reference
     fn new(binder: &Strong<I>) -> Self {
         let weak_binder = binder.as_binder().downgrade();
-        Weak { weak_binder, interface_type: PhantomData }
+        Weak {
+            weak_binder,
+            interface_type: PhantomData,
+        }
     }
 
     /// Upgrade this weak reference to a strong reference if the binder object
     /// is still alive
     pub fn upgrade(&self) -> Result<Strong<I>> {
-        self.weak_binder.promote().ok_or(StatusCode::DEAD_OBJECT).and_then(FromIBinder::try_from)
+        self.weak_binder
+            .promote()
+            .ok_or(StatusCode::DEAD_OBJECT)
+            .and_then(FromIBinder::try_from)
     }
 }
 
 impl<I: FromIBinder + ?Sized> Clone for Weak<I> {
     fn clone(&self) -> Self {
-        Self { weak_binder: self.weak_binder.clone(), interface_type: PhantomData }
+        Self {
+            weak_binder: self.weak_binder.clone(),
+            interface_type: PhantomData,
+        }
     }
 }
 
@@ -480,7 +487,7 @@ impl<I: FromIBinder + ?Sized> Ord for Weak<I> {
 
 impl<I: FromIBinder + ?Sized> PartialOrd for Weak<I> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.weak_binder.partial_cmp(&other.weak_binder)
+        Some(self.cmp(other))
     }
 }
 

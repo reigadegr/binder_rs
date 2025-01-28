@@ -1,5 +1,5 @@
-use binder::BinderFeatures;
 use crate::IRemoteService::{BnRemoteService, IRemoteService};
+use binder::BinderFeatures;
 use binder::{Interface, Result as BinderResult};
 
 pub struct MyService;

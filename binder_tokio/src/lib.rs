@@ -27,7 +27,6 @@
 //! ```
 //!
 //! [`Tokio`]: crate::Tokio
-
 use binder::binder_impl::BinderAsyncRuntime;
 use binder::{BinderAsyncPool, BoxFuture, FromIBinder, StatusCode, Strong};
 use std::future::Future;

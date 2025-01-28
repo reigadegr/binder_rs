@@ -1,9 +1,9 @@
 #![allow(non_snake_case)]
-mod cli;
-mod server;
-mod client;
 mod IRemoteService;
+mod cli;
+mod client;
+mod server;
 
-fn main() -> anyhow::Result<()>{
+fn main() -> anyhow::Result<()> {
     cli::run()
 }

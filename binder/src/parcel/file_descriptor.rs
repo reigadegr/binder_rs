@@ -115,7 +115,10 @@ impl DeserializeOption for ParcelFileDescriptor {
             // descriptor. The read function passes ownership of the file
             // descriptor to its caller if it was non-null, so we must take
             // ownership of the file and ensure that it is eventually closed.
-            status_result(sys::AParcel_readParcelFileDescriptor(parcel.as_native(), &mut fd))?;
+            status_result(sys::AParcel_readParcelFileDescriptor(
+                parcel.as_native(),
+                &mut fd,
+            ))?;
         }
         if fd < 0 {
             Ok(None)
@@ -133,7 +136,9 @@ impl DeserializeOption for ParcelFileDescriptor {
 
 impl Deserialize for ParcelFileDescriptor {
     fn deserialize(parcel: &BorrowedParcel<'_>) -> Result<Self> {
-        Deserialize::deserialize(parcel).transpose().unwrap_or(Err(StatusCode::UNEXPECTED_NULL))
+        Deserialize::deserialize(parcel)
+            .transpose()
+            .unwrap_or(Err(StatusCode::UNEXPECTED_NULL))
     }
 }
 

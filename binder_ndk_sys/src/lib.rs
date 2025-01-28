@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 //! Generated Rust bindings to libbinder_ndk
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
@@ -29,6 +28,6 @@ impl Error for android_c_interface_StatusCode {}
 
 impl fmt::Display for android_c_interface_StatusCode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "StatusCode::{:?}", self)
+        write!(f, "StatusCode::{self:?}")
     }
 }

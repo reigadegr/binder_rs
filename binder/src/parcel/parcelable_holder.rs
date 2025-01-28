@@ -48,7 +48,10 @@ impl<T> AnyParcelable for T where T: DowncastSync + Parcelable + std::fmt::Debug
 #[derive(Debug, Clone)]
 enum ParcelableHolderData {
     Empty,
-    Parcelable { parcelable: Arc<dyn AnyParcelable>, name: String },
+    Parcelable {
+        parcelable: Arc<dyn AnyParcelable>,
+        name: String,
+    },
     Parcel(Parcel),
 }
 
@@ -74,7 +77,10 @@ pub struct ParcelableHolder {
 impl ParcelableHolder {
     /// Construct a new `ParcelableHolder` with the given stability.
     pub fn new(stability: Stability) -> Self {
-        Self { data: Mutex::new(ParcelableHolderData::Empty), stability }
+        Self {
+            data: Mutex::new(ParcelableHolderData::Empty),
+            stability,
+        }
     }
 
     /// Reset the contents of this `ParcelableHolder`.
@@ -95,8 +101,10 @@ impl ParcelableHolder {
             return Err(StatusCode::BAD_VALUE);
         }
 
-        *self.data.get_mut().unwrap() =
-            ParcelableHolderData::Parcelable { parcelable: p, name: T::get_descriptor().into() };
+        *self.data.get_mut().unwrap() = ParcelableHolderData::Parcelable {
+            parcelable: p,
+            name: T::get_descriptor().into(),
+        };
 
         Ok(())
     }
@@ -122,7 +130,10 @@ impl ParcelableHolder {
         let mut data = self.data.lock().unwrap();
         match *data {
             ParcelableHolderData::Empty => Ok(None),
-            ParcelableHolderData::Parcelable { ref parcelable, ref name } => {
+            ParcelableHolderData::Parcelable {
+                ref parcelable,
+                ref name,
+            } => {
                 if name != parcelable_desc {
                     return Err(StatusCode::BAD_VALUE);
                 }
@@ -188,7 +199,10 @@ impl Parcelable for ParcelableHolder {
         let mut data = self.data.lock().unwrap();
         match *data {
             ParcelableHolderData::Empty => parcel.write(&0i32),
-            ParcelableHolderData::Parcelable { ref parcelable, ref name } => {
+            ParcelableHolderData::Parcelable {
+                ref parcelable,
+                ref name,
+            } => {
                 let length_start = parcel.get_data_position();
                 parcel.write(&0i32)?;
 
@@ -237,7 +251,9 @@ impl Parcelable for ParcelableHolder {
         // TODO: C++ ParcelableHolder accepts sizes up to SIZE_MAX here, but we
         // only go up to i32::MAX because that's what our API uses everywhere
         let data_start = parcel.get_data_position();
-        let data_end = data_start.checked_add(data_size).ok_or(StatusCode::BAD_VALUE)?;
+        let data_end = data_start
+            .checked_add(data_size)
+            .ok_or(StatusCode::BAD_VALUE)?;
 
         let mut new_parcel = Parcel::new();
         new_parcel.append_from(parcel, data_start, data_size)?;

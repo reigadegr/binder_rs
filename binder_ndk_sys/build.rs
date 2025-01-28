@@ -36,9 +36,9 @@ fn build_stub() -> Result<()> {
     let src_path = project_path.join("src");
     std::fs::create_dir_all(&src_path)?;
     let mut f = std::fs::File::create(src_path.join("lib.rs"))?;
-    for symbol in symbols.split("\n") {
+    for symbol in symbols.split('\n') {
         if !symbol.is_empty() {
-            f.write_all(format!("#[no_mangle]\npub extern fn {}() {{}}\n", symbol).as_bytes())?;
+            f.write_all(format!("#[no_mangle]\npub extern fn {symbol}() {{}}\n").as_bytes())?;
         }
     }
     f.flush()?;
@@ -56,10 +56,9 @@ fn build_stub() -> Result<()> {
         .status()?;
 
     // we always use debug build for stub due to speed!
-    println!(
-        "cargo:rustc-link-search={}",
-        format!("{}/{}/{}", outdir, target, "debug")
-    );
+
+    let path = std::path::Path::new(&outdir).join(target).join("debug");
+    println!("cargo:rustc-link-search={}", path.display());
     println!("cargo:rustc-link-lib=binder_ndk");
 
     Ok(())
@@ -75,12 +74,12 @@ fn main() {
     // to bindgen, and lets you build up options for
     // the resulting bindings.
     let headers_path = "/usr/include";
-   
+
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("src/BinderBindings.hpp")
-        .clang_arg(format!("-I{}", headers_path))
+        .clang_arg(format!("-I{headers_path}"))
         .clang_arg("-Isrc/include_cpp")
         .clang_arg("-Isrc/include_ndk")
         .clang_arg("-Isrc/include_platform")
@@ -100,7 +99,7 @@ fn main() {
         .allowlist_function(".*")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

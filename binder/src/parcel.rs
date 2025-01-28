@@ -78,7 +78,9 @@ impl Parcel {
             // a valid pointer. If it fails, the process will crash.
             sys::AParcel_create()
         };
-        Self { ptr: NonNull::new(ptr).expect("AParcel_create returned null pointer") }
+        Self {
+            ptr: NonNull::new(ptr).expect("AParcel_create returned null pointer"),
+        }
     }
 
     /// Create an owned reference to a parcel object from a raw pointer.
@@ -114,7 +116,10 @@ impl Parcel {
         // lifetime of the returned `BorrowedParcel` is tied to `self`, so the
         // borrow checker will ensure that the `AParcel` can only be accessed
         // via the `BorrowParcel` until it goes out of scope.
-        BorrowedParcel { ptr: self.ptr, _lifetime: PhantomData }
+        BorrowedParcel {
+            ptr: self.ptr,
+            _lifetime: PhantomData,
+        }
     }
 
     /// Get an immutable borrowed view into the contents of this `Parcel`.
@@ -158,7 +163,10 @@ impl<'a> BorrowedParcel<'a> {
     /// since this is a mutable borrow, it must have exclusive access to the
     /// AParcel for the duration of the borrow.
     pub unsafe fn from_raw(ptr: *mut sys::AParcel) -> Option<BorrowedParcel<'a>> {
-        Some(Self { ptr: NonNull::new(ptr)?, _lifetime: PhantomData })
+        Some(Self {
+            ptr: NonNull::new(ptr)?,
+            _lifetime: PhantomData,
+        })
     }
 
     /// Get a sub-reference to this reference to the parcel.
@@ -167,7 +175,10 @@ impl<'a> BorrowedParcel<'a> {
         // lifetime of the returned `BorrowedParcel` is tied to `self`, so the
         // borrow checker will ensure that the `AParcel` can only be accessed
         // via the `BorrowParcel` until it goes out of scope.
-        BorrowedParcel { ptr: self.ptr, _lifetime: PhantomData }
+        BorrowedParcel {
+            ptr: self.ptr,
+            _lifetime: PhantomData,
+        }
     }
 }
 
@@ -492,13 +503,18 @@ impl BorrowedParcel<'_> {
             return Err(StatusCode::BAD_VALUE);
         }
 
-        let end = start.checked_add(parcelable_size).ok_or(StatusCode::BAD_VALUE)?;
+        let end = start
+            .checked_add(parcelable_size)
+            .ok_or(StatusCode::BAD_VALUE)?;
         if end > self.get_data_size() {
             return Err(StatusCode::NOT_ENOUGH_DATA);
         }
 
         let subparcel = ReadableSubParcel {
-            parcel: BorrowedParcel { ptr: self.ptr, _lifetime: PhantomData },
+            parcel: BorrowedParcel {
+                ptr: self.ptr,
+                _lifetime: PhantomData,
+            },
             end_position: end,
         };
         f(subparcel)?;
@@ -728,7 +744,10 @@ fn test_read_write() {
     assert_eq!(parcel.read::<Option<String>>(), Ok(None));
     assert_eq!(parcel.read::<String>(), Err(StatusCode::UNEXPECTED_NULL));
 
-    assert_eq!(parcel.borrowed_ref().read_binder().err(), Some(StatusCode::BAD_TYPE));
+    assert_eq!(
+        parcel.borrowed_ref().read_binder().err(),
+        Some(StatusCode::BAD_TYPE)
+    );
 
     parcel.write(&1i32).unwrap();
 
@@ -796,7 +815,10 @@ fn test_read_data() {
         assert!(parcel.set_data_position(start).is_ok());
     }
 
-    assert_eq!(parcel.read::<f32>().unwrap(), 1143139100000000000000000000.0);
+    assert_eq!(
+        parcel.read::<f32>().unwrap(),
+        1143139100000000000000000000.0
+    );
     assert_eq!(parcel.read::<f32>().unwrap(), 40.043392);
 
     unsafe {
@@ -822,7 +844,10 @@ fn test_utf8_utf16_conversions() {
     unsafe {
         assert!(parcel.set_data_position(start).is_ok());
     }
-    assert_eq!(parcel.read::<Option<String>>().unwrap().unwrap(), "Hello, Binder!",);
+    assert_eq!(
+        parcel.read::<Option<String>>().unwrap().unwrap(),
+        "Hello, Binder!",
+    );
     unsafe {
         assert!(parcel.set_data_position(start).is_ok());
     }
@@ -841,7 +866,13 @@ fn test_utf8_utf16_conversions() {
 
     assert!(parcel.write(&["str1", "str2", "str3"][..]).is_ok());
     assert!(parcel
-        .write(&[String::from("str4"), String::from("str5"), String::from("str6"),][..])
+        .write(
+            &[
+                String::from("str4"),
+                String::from("str5"),
+                String::from("str6"),
+            ][..]
+        )
         .is_ok());
 
     let s1 = "Hello, Binder!";
@@ -853,8 +884,14 @@ fn test_utf8_utf16_conversions() {
         assert!(parcel.set_data_position(start).is_ok());
     }
 
-    assert_eq!(parcel.read::<Vec<String>>().unwrap(), ["str1", "str2", "str3"]);
-    assert_eq!(parcel.read::<Vec<String>>().unwrap(), ["str4", "str5", "str6"]);
+    assert_eq!(
+        parcel.read::<Vec<String>>().unwrap(),
+        ["str1", "str2", "str3"]
+    );
+    assert_eq!(
+        parcel.read::<Vec<String>>().unwrap(),
+        ["str4", "str5", "str6"]
+    );
     assert_eq!(parcel.read::<Vec<String>>().unwrap(), [s1, s2, s3]);
 }
 
@@ -917,8 +954,20 @@ fn test_append_from() {
     assert_eq!(Err(StatusCode::NOT_ENOUGH_DATA), parcel2.read::<i32>());
 
     let mut parcel2 = Parcel::new();
-    assert_eq!(Err(StatusCode::BAD_VALUE), parcel2.append_from(&parcel1, 4, 2));
-    assert_eq!(Err(StatusCode::BAD_VALUE), parcel2.append_from(&parcel1, 2, 4));
-    assert_eq!(Err(StatusCode::BAD_VALUE), parcel2.append_from(&parcel1, -1, 4));
-    assert_eq!(Err(StatusCode::BAD_VALUE), parcel2.append_from(&parcel1, 2, -1));
+    assert_eq!(
+        Err(StatusCode::BAD_VALUE),
+        parcel2.append_from(&parcel1, 4, 2)
+    );
+    assert_eq!(
+        Err(StatusCode::BAD_VALUE),
+        parcel2.append_from(&parcel1, 2, 4)
+    );
+    assert_eq!(
+        Err(StatusCode::BAD_VALUE),
+        parcel2.append_from(&parcel1, -1, 4)
+    );
+    assert_eq!(
+        Err(StatusCode::BAD_VALUE),
+        parcel2.append_from(&parcel1, 2, -1)
+    );
 }

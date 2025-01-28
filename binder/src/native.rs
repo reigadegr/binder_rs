@@ -98,7 +98,10 @@ impl<T: Remotable> Binder<T> {
             // ends.
             sys::AIBinder_new(class.into(), rust_object as *mut c_void)
         };
-        let mut binder = Binder { ibinder, rust_object };
+        let mut binder = Binder {
+            ibinder,
+            rust_object,
+        };
         binder.mark_stability(stability);
         binder
     }
@@ -418,7 +421,10 @@ impl<B: Remotable> TryFrom<SpIBinder> for Binder<B> {
         // We are transferring the ownership of the AIBinder into the new Binder
         // object.
         let mut ibinder = ManuallyDrop::new(ibinder);
-        Ok(Binder { ibinder: ibinder.as_native_mut(), rust_object: userdata as *mut B })
+        Ok(Binder {
+            ibinder: ibinder.as_native_mut(),
+            rust_object: userdata as *mut B,
+        })
     }
 }
 

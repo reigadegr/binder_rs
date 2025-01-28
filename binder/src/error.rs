@@ -413,7 +413,10 @@ mod tests {
         assert!(!status.is_ok());
         assert_eq!(status.exception_code(), ExceptionCode::ILLEGAL_STATE);
         assert_eq!(status.service_specific_error(), 0);
-        assert_eq!(status.get_description(), "Status(-5, EX_ILLEGAL_STATE): 'message'".to_string());
+        assert_eq!(
+            status.get_description(),
+            "Status(-5, EX_ILLEGAL_STATE): 'message'".to_string()
+        );
     }
 
     #[test]
@@ -423,6 +426,9 @@ mod tests {
         assert!(!status.is_ok());
         assert_eq!(status.exception_code(), ExceptionCode::ILLEGAL_STATE);
         assert_eq!(status.service_specific_error(), 0);
-        assert_eq!(status.get_description(), "Status(-5, EX_ILLEGAL_STATE): ''".to_string());
+        assert_eq!(
+            status.get_description(),
+            "Status(-5, EX_ILLEGAL_STATE): ''".to_string()
+        );
     }
 }

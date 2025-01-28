@@ -440,7 +440,10 @@ impl SerializeArray for SpIBinder {}
 
 impl Deserialize for SpIBinder {
     fn deserialize(parcel: &BorrowedParcel<'_>) -> Result<SpIBinder> {
-        parcel.read_binder().transpose().unwrap_or(Err(StatusCode::UNEXPECTED_NULL))
+        parcel
+            .read_binder()
+            .transpose()
+            .unwrap_or(Err(StatusCode::UNEXPECTED_NULL))
     }
 }
 
@@ -847,7 +850,10 @@ pub fn get_declared_instances(interface: &str) -> Result<Vec<String>> {
         .map(CString::into_string)
         .collect::<std::result::Result<Vec<String>, _>>()
         .map_err(|e| {
-            eprintln!("An interface instance name was not a valid UTF-8 string: {}", e);
+            eprintln!(
+                "An interface instance name was not a valid UTF-8 string: {}",
+                e
+            );
             StatusCode::BAD_VALUE
         })
 }
