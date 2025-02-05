@@ -48,10 +48,7 @@ impl<T> AnyParcelable for T where T: DowncastSync + Parcelable + std::fmt::Debug
 #[derive(Debug, Clone)]
 enum ParcelableHolderData {
     Empty,
-    Parcelable {
-        parcelable: Arc<dyn AnyParcelable>,
-        name: String,
-    },
+    Parcelable { parcelable: Arc<dyn AnyParcelable>, name: String },
     Parcel(Parcel),
 }
 
@@ -77,10 +74,7 @@ pub struct ParcelableHolder {
 impl ParcelableHolder {
     /// Construct a new `ParcelableHolder` with the given stability.
     pub fn new(stability: Stability) -> Self {
-        Self {
-            data: Mutex::new(ParcelableHolderData::Empty),
-            stability,
-        }
+        Self { data: Mutex::new(ParcelableHolderData::Empty), stability }
     }
 
     /// Reset the contents of this `ParcelableHolder`.
@@ -101,10 +95,8 @@ impl ParcelableHolder {
             return Err(StatusCode::BAD_VALUE);
         }
 
-        *self.data.get_mut().unwrap() = ParcelableHolderData::Parcelable {
-            parcelable: p,
-            name: T::get_descriptor().into(),
-        };
+        *self.data.get_mut().unwrap() =
+            ParcelableHolderData::Parcelable { parcelable: p, name: T::get_descriptor().into() };
 
         Ok(())
     }
@@ -130,10 +122,7 @@ impl ParcelableHolder {
         let mut data = self.data.lock().unwrap();
         match *data {
             ParcelableHolderData::Empty => Ok(None),
-            ParcelableHolderData::Parcelable {
-                ref parcelable,
-                ref name,
-            } => {
+            ParcelableHolderData::Parcelable { ref parcelable, ref name } => {
                 if name != parcelable_desc {
                     return Err(StatusCode::BAD_VALUE);
                 }
@@ -144,8 +133,8 @@ impl ParcelableHolder {
                 }
             }
             ParcelableHolderData::Parcel(ref mut parcel) => {
+                // Safety: 0 should always be a valid position.
                 unsafe {
-                    // Safety: 0 should always be a valid position.
                     parcel.set_data_position(0)?;
                 }
 
@@ -172,6 +161,15 @@ impl ParcelableHolder {
     }
 }
 
+impl Clone for ParcelableHolder {
+    fn clone(&self) -> ParcelableHolder {
+        ParcelableHolder {
+            data: Mutex::new(self.data.lock().unwrap().clone()),
+            stability: self.stability,
+        }
+    }
+}
+
 impl Serialize for ParcelableHolder {
     fn serialize(&self, parcel: &mut BorrowedParcel<'_>) -> Result<(), StatusCode> {
         parcel.write(&NON_NULL_PARCELABLE_FLAG)?;
@@ -180,6 +178,14 @@ impl Serialize for ParcelableHolder {
 }
 
 impl Deserialize for ParcelableHolder {
+    type UninitType = Self;
+    fn uninit() -> Self::UninitType {
+        Self::new(Default::default())
+    }
+    fn from_init(value: Self) -> Self::UninitType {
+        value
+    }
+
     fn deserialize(parcel: &BorrowedParcel<'_>) -> Result<Self, StatusCode> {
         let status: i32 = parcel.read()?;
         if status == NULL_PARCELABLE_FLAG {
@@ -199,10 +205,7 @@ impl Parcelable for ParcelableHolder {
         let mut data = self.data.lock().unwrap();
         match *data {
             ParcelableHolderData::Empty => parcel.write(&0i32),
-            ParcelableHolderData::Parcelable {
-                ref parcelable,
-                ref name,
-            } => {
+            ParcelableHolderData::Parcelable { ref parcelable, ref name } => {
                 let length_start = parcel.get_data_position();
                 parcel.write(&0i32)?;
 
@@ -211,15 +214,15 @@ impl Parcelable for ParcelableHolder {
                 parcelable.write_to_parcel(parcel)?;
 
                 let end = parcel.get_data_position();
+                // Safety: we got the position from `get_data_position`.
                 unsafe {
-                    // Safety: we got the position from `get_data_position`.
                     parcel.set_data_position(length_start)?;
                 }
 
                 assert!(end >= data_start);
                 parcel.write(&(end - data_start))?;
+                // Safety: we got the position from `get_data_position`.
                 unsafe {
-                    // Safety: we got the position from `get_data_position`.
                     parcel.set_data_position(end)?;
                 }
 
@@ -251,19 +254,17 @@ impl Parcelable for ParcelableHolder {
         // TODO: C++ ParcelableHolder accepts sizes up to SIZE_MAX here, but we
         // only go up to i32::MAX because that's what our API uses everywhere
         let data_start = parcel.get_data_position();
-        let data_end = data_start
-            .checked_add(data_size)
-            .ok_or(StatusCode::BAD_VALUE)?;
+        let data_end = data_start.checked_add(data_size).ok_or(StatusCode::BAD_VALUE)?;
 
         let mut new_parcel = Parcel::new();
         new_parcel.append_from(parcel, data_start, data_size)?;
         *self.data.get_mut().unwrap() = ParcelableHolderData::Parcel(new_parcel);
 
+        // Safety: `append_from` checks if `data_size` overflows
+        // `parcel` and returns `BAD_VALUE` if that happens. We also
+        // explicitly check for negative and zero `data_size` above,
+        // so `data_end` is guaranteed to be greater than `data_start`.
         unsafe {
-            // Safety: `append_from` checks if `data_size` overflows
-            // `parcel` and returns `BAD_VALUE` if that happens. We also
-            // explicitly check for negative and zero `data_size` above,
-            // so `data_end` is guaranteed to be greater than `data_start`.
             parcel.set_data_position(data_end)?;
         }
 
