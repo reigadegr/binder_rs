@@ -390,6 +390,12 @@ uid_t AIBinder_getCallingUid() __INTRODUCED_IN(29);
  * calling process dies and is replaced with another process with elevated permissions and the same
  * PID.
  *
+ * Warning: oneway transactions do not receive PID. Even if you expect
+ * a transaction to be synchronous, a misbehaving client could send it
+ * as a synchronous call and result in a 0 PID here. Additionally, if
+ * there is a race and the calling process dies, the PID may still be
+ * 0 for a synchronous call.
+ *
  * Available since API level 29.
  *
  * \return calling pid or the current process's PID if this thread isn't processing a transaction.
@@ -712,8 +718,16 @@ binder_status_t AIBinder_getExtension(AIBinder* binder, AIBinder** outExt) __INT
  *     When registering the interface, add:
  *         std::shared_ptr<MyFoo> foo = new MyFoo; // class in AOSP codebase
  *         std::shared_ptr<MyBar> bar = new MyBar; // custom extension class
- *         ... = AIBinder_setExtension(foo->asBinder().get(), bar->asBinder().get());
+ *         SpAIBinder binder = foo->asBinder(); // target binder to extend
+ *         ... = AIBinder_setExtension(binder.get(), bar->asBinder().get());
+ *         ... = AServiceManager_addService(binder.get(), instanceName);
  *         // handle error
+ *
+ *         Do not use foo->asBinder().get() as the target binder argument to
+ *         AIBinder_setExtensions because asBinder it creates a new binder
+ *         object that will be destroyed after the function is called. The same
+ *         binder object must be used for AIBinder_setExtension and
+ *         AServiceManager_addService to register the service with an extension.
  *
  *     Then, clients of IFoo can get this extension:
  *         SpAIBinder binder = ...;
@@ -757,7 +771,7 @@ const char* AIBinder_Class_getDescriptor(const AIBinder_Class* clazz) __INTRODUC
  * This provides a per-process-unique total ordering of binders where a null
  * AIBinder* object is considered to be before all other binder objects.
  * For instance, two binders refer to the same object in a local or remote
- * process when both AIBinder_lt(a, b) and AIBinder(b, a) are false. This API
+ * process when both AIBinder_lt(a, b) and AIBinder_lt(b, a) are false. This API
  * might be used to insert and lookup binders in binary search trees.
  *
  * AIBinder* pointers themselves actually also create a per-process-unique total
