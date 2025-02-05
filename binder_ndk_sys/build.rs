@@ -52,12 +52,13 @@ fn build_stub() -> Result<()> {
         .arg(project_cargo_path)
         .arg("--target-dir")
         .arg(&outdir)
+        .arg("--release")
         .current_dir(&project_path)
         .status()?;
 
     // we always use debug build for stub due to speed!
 
-    let path = std::path::Path::new(&outdir).join(target).join("debug");
+    let path = std::path::Path::new(&outdir).join(target).join("release");
     println!("cargo:rustc-link-search={}", path.display());
     println!("cargo:rustc-link-lib=binder_ndk");
 
