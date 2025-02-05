@@ -138,6 +138,8 @@ class ICInterface : public SharedRefBase {
 
     /**
      * Dumps information about the interface. By default, dumps nothing.
+     *
+     * This method is not given ownership of the FD.
      */
     virtual inline binder_status_t dump(int fd, const char** args, uint32_t numArgs);
 
@@ -222,6 +224,8 @@ class BpCInterface : public INTERFACE {
     virtual ~BpCInterface() {}
 
     SpAIBinder asBinder() override final;
+
+    const SpAIBinder& asBinderReference() { return mBinder; }
 
     bool isRemote() override final { return AIBinder_isRemote(mBinder.get()); }
 
